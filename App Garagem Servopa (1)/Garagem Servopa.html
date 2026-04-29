@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Garagem Servopa — Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after { box-sizing: border-box; }
+  html, body { margin:0; padding:0; height:100%; }
+  body {
+    font-family: "Inter","Satoshi",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+    background: var(--svp-bg, radial-gradient(ellipse at top, #f5f6fa 0%, #e6e9f0 100%));
+    transition: background 350ms ease;
+    color: #29261b;
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+  #root { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 32px 16px; }
+  /* hide scrollbars on horizontal chips */
+  ::-webkit-scrollbar { width: 0; height: 0; }
+  /* prevent inner scroll shadows from bleeding */
+  button { font-family: inherit; cursor: pointer; }
+  input, button, textarea { font-family: inherit; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- Pinned React + Babel -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<!-- Use React global hooks -->
+<script>
+  const { useState, useEffect, useMemo, useRef } = React;
+</script>
+
+<!-- Data (no JSX) -->
+<script src="servopa-data.js"></script>
+
+<!-- iOS frame -->
+<script type="text/babel" src="ios-frame.jsx"></script>
+
+<!-- Servopa modules -->
+<script type="text/babel" src="servopa-theme.jsx"></script>
+<script type="text/babel" src="servopa-ui.jsx"></script>
+<script type="text/babel" src="servopa-login.jsx"></script>
+<script type="text/babel" src="servopa-conta.jsx"></script>
+<script type="text/babel" src="servopa-garagem.jsx"></script>
+<script type="text/babel" src="servopa-marketplace.jsx"></script>
+<script type="text/babel" src="servopa-comunidade.jsx"></script>
+<script type="text/babel" src="servopa-cardetail.jsx"></script>
+<script type="text/babel" src="servopa-sheets.jsx"></script>
+<script type="text/babel" src="servopa-mkt-sheets.jsx"></script>
+<script type="text/babel" src="servopa-mkt-sheets-2.jsx"></script>
+
+<!-- Tweaks panel -->
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+
+<!-- App shell -->
+<script type="text/babel" data-presets="env,react" data-plugins="">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "primaryColor": "",
+  "fontScale": 1,
+  "cardRadius": 16,
+  "density": "regular",
+  "navStyle": "pill",
+  "simulateVariation": "unified"
+}/*EDITMODE-END*/;
+
+function buildTheme(tweaks) {
+  const base = window.SVP_THEMES.clean;
+  const t = { ...base };
+  if (tweaks.primaryColor) t.primary = tweaks.primaryColor;
+  if (typeof tweaks.cardRadius === 'number') {
+    t.cardRadius = tweaks.cardRadius;
+    t.smallRadius = Math.max(6, tweaks.cardRadius - 4);
+    t.btnRadius = Math.max(6, Math.min(tweaks.cardRadius, 14));
+    t.fieldRadius = Math.max(6, Math.min(tweaks.cardRadius, 14));
+  }
+  return t;
+}
+
+// ───── Bottom Nav ───────────────────────────────────────────
+function BottomNav({ active, setActive, theme, navStyle }) {
+  const { Ico } = window.SVP;
+  const items = [
+    { id: 'conta',     label: 'Conta',     icon: 'wallet' },
+    { id: 'garagem',   label: 'Garagem',   icon: 'car'    },
+    { id: 'estoque',   label: 'Estoque',   icon: 'store'  },
+    { id: 'eventos',   label: 'Eventos',   icon: 'sparkles' },
+  ];
+
+  if (navStyle === 'pill') {
+    return (
+      <div style={{ position: 'absolute', bottom: 22, left: 0, right: 0, display: 'flex', justifyContent: 'center', pointerEvents: 'none', zIndex: 30 }}>
+        <nav style={{
+          pointerEvents: 'auto',
+          display: 'flex',
+          gap: 4,
+          padding: 6,
+          background: theme.statusBarStyle === 'light' ? 'rgba(20,20,24,0.85)' : 'rgba(255,255,255,0.92)',
+          backdropFilter: 'blur(20px) saturate(160%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(160%)',
+          border: `1px solid ${theme.border}`,
+          borderRadius: 999,
+          boxShadow: '0 12px 40px rgba(0,0,0,0.18)',
+        }}>
+          {items.map(it => {
+            const IconComp = Ico[it.icon];
+            const isActive = active === it.id;
+            return (
+              <button key={it.id} onClick={() => setActive(it.id)} style={{
+                background: isActive ? theme.primary : 'transparent',
+                color: isActive ? theme.onPrimary : theme.text,
+                border: 'none',
+                padding: isActive ? '9px 16px' : '9px 12px',
+                borderRadius: 999,
+                fontSize: 12,
+                fontWeight: 700,
+                display: 'flex', alignItems: 'center', gap: 6,
+                transition: 'all 200ms ease',
+              }}>
+                <IconComp width="16" height="16"/>
+                {isActive && <span>{it.label}</span>}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+    );
+  }
+
+  // bar style — full-width
+  return (
+    <nav style={{
+      position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 30,
+      background: theme.statusBarStyle === 'light' ? 'rgba(15,17,21,0.92)' : 'rgba(255,255,255,0.95)',
+      backdropFilter: 'blur(20px) saturate(160%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(160%)',
+      borderTop: `1px solid ${theme.border}`,
+      padding: '8px 0 22px',
+      display: 'flex', justifyContent: 'space-around',
+    }}>
+      {items.map(it => {
+        const IconComp = Ico[it.icon];
+        const isActive = active === it.id;
+        return (
+          <button key={it.id} onClick={() => setActive(it.id)} style={{
+            background: 'transparent', border: 'none',
+            color: isActive ? theme.primary : theme.muted,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+            fontSize: 10, fontWeight: 700, padding: '4px 12px',
+          }}>
+            <IconComp width="22" height="22"/>
+            {it.label}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+// ───── App ──────────────────────────────────────────────────
+function App() {
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [authed, setAuthed] = useState(true); // start authed so users see the meat
+  const [isClient, setIsClient] = useState(true);
+  const [active, setActive] = useState('conta');
+  const [carDetail, setCarDetail] = useState(null);
+  const [editProfile, setEditProfile] = useState(false);
+  const [waOpen, setWaOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [simulateOpen, setSimulateOpen] = useState(false);
+  const [testDriveOpen, setTestDriveOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [likedMap, setLikedMap] = useState({});
+  const [activeFilters, setActiveFilters] = useState(null);
+
+  const theme = useMemo(() => buildTheme(tweaks), [tweaks.primaryColor, tweaks.cardRadius]);
+
+  // Apply background to body behind iPhone
+  useEffect(() => {
+    document.body.style.setProperty('--svp-bg', window.SVP_BG.clean);
+    document.body.style.fontFamily = theme.fontStack;
+  }, [theme.fontStack]);
+
+  // Font scale via root css
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${16 * (tweaks.fontScale || 1)}px`;
+  }, [tweaks.fontScale]);
+
+  const data = window.SVP_DATA;
+  const user = useMemo(() => ({ ...data.user, isClient }), [isClient]);
+
+  // Density adjusts a few things — for now we just pass it through
+  const densityScale = tweaks.density === 'compact' ? 0.92 : tweaks.density === 'comfy' ? 1.08 : 1;
+
+  let screen;
+  if (!authed) {
+    screen = <LoginScreen theme={theme} onLogin={(client) => { setIsClient(client); setAuthed(true); }} />;
+  } else if (carDetail) {
+    const baseCar = data.marketplace.find(c => c.id === carDetail);
+    const car = baseCar ? { ...baseCar, isLiked: likedMap[baseCar.id] ?? baseCar.isLiked } : null;
+    screen = <CarDetailScreen car={car} theme={theme} onBack={() => setCarDetail(null)}
+      onSimulate={() => setSimulateOpen(true)}
+      onTestDrive={() => setTestDriveOpen(true)}
+      onChat={() => setChatOpen(true)}
+      onToggleLike={() => setLikedMap(m => ({ ...m, [car.id]: !car.isLiked }))} />;
+  } else if (active === 'conta') {
+    screen = <ContaScreen user={user} theme={theme} activities={data.earnActivities} rewards={data.rewards} history={data.history} onActivity={() => {}} onEditProfile={() => setEditProfile(true)} />;
+  } else if (active === 'garagem') {
+    screen = <GaragemScreen user={user} garage={data.garage} appointments={data.appointments} history={data.history} theme={theme} />;
+  } else if (active === 'estoque') {
+    screen = <MarketplaceScreen marketplace={data.marketplace} theme={theme} onCar={(id) => setCarDetail(id)}
+      onOpenFilters={() => setFilterOpen(true)}
+      onOpenSearch={() => setSearchOpen(true)} />;
+  } else if (active === 'eventos') {
+    screen = <ComunidadeScreen events={data.events} offers={data.offers} theme={theme} />;
+  }
+
+  // Bottom-nav padding: reserve room for nav (pill ~ 70, bar ~ 88)
+  const navPad = tweaks.navStyle === 'pill' ? 96 : 96;
+
+  return (
+    <>
+      <IOSDevice dark={theme.statusBarStyle === 'light'}>
+        <div style={{ background: theme.bg, color: theme.text, position: 'relative', fontSize: `${14 * densityScale}px`, height: '100%', display: 'flex', flexDirection: 'column', fontFamily: theme.fontStack }} data-screen-label={`Servopa: ${authed ? (carDetail ? 'CarDetail' : active) : 'Login'}`}>
+          <div style={{ flex: 1, overflow: 'auto', paddingTop: 54, paddingBottom: authed && !carDetail ? (tweaks.navStyle === 'pill' ? 96 : 96) : 40 }}>
+            {screen}
+          </div>
+          {authed && !carDetail && <BottomNav active={active} setActive={setActive} theme={theme} navStyle={tweaks.navStyle} />}
+
+          {/* Floating WhatsApp button */}
+          {authed && !carDetail && (() => {
+            const WhatsIcon = window.SVP.Ico.whatsapp;
+            return (
+              <button onClick={() => setWaOpen(true)} title="Falar com Servopa" style={{
+                position: 'absolute',
+                right: 16,
+                bottom: tweaks.navStyle === 'pill' ? 100 : 110,
+                width: 50, height: 50, borderRadius: 25,
+                background: '#25D366',
+                color: '#FFFFFF',
+                border: '3px solid #FFFFFF',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 8px 24px rgba(37,211,102,0.45), 0 2px 6px rgba(0,0,0,0.18)',
+                zIndex: 35,
+                cursor: 'pointer',
+              }}>
+                <WhatsIcon width="24" height="24"/>
+              </button>
+            );
+          })()}
+
+          {/* Edit profile modal */}
+          {editProfile && (
+            <EditProfileSheet user={user} theme={theme} onClose={() => setEditProfile(false)} />
+          )}
+
+          {/* WhatsApp sheet */}
+          {waOpen && (
+            <WhatsAppSheet theme={theme} onClose={() => setWaOpen(false)} />
+          )}
+
+          {/* Marketplace: Filter / Search */}
+          {filterOpen && (
+            <FilterSheet theme={theme} onClose={() => setFilterOpen(false)} initial={activeFilters}
+              onApply={(f) => setActiveFilters(f)} />
+          )}
+          {searchOpen && (
+            <SearchSheet theme={theme} onClose={() => setSearchOpen(false)}
+              marketplace={data.marketplace}
+              onPickCar={(id) => setCarDetail(id)} />
+          )}
+
+          {/* Car detail: Simulate / Test drive / Dealer chat */}
+          {simulateOpen && carDetail && (
+            <SimulateSheet theme={theme} onClose={() => setSimulateOpen(false)}
+              car={data.marketplace.find(c => c.id === carDetail)}
+              variation={tweaks.simulateVariation} />
+          )}
+          {testDriveOpen && carDetail && (
+            <TestDriveSheet theme={theme} onClose={() => setTestDriveOpen(false)}
+              car={data.marketplace.find(c => c.id === carDetail)} />
+          )}
+          {chatOpen && carDetail && (
+            <DealerChatSheet theme={theme} onClose={() => setChatOpen(false)}
+              car={data.marketplace.find(c => c.id === carDetail)} />
+          )}
+        </div>
+      </IOSDevice>
+
+      <TweaksPanel title="Tweaks · Garagem Servopa">
+        <TweakSection label="Cor" />
+        <TweakColor label="Primária" value={tweaks.primaryColor || theme.primary}
+          onChange={(v) => setTweak('primaryColor', v)} />
+        <TweakButton label="Resetar para azul Servopa" onClick={() => setTweak('primaryColor', '')} />
+
+        <TweakSection label="Forma" />
+        <TweakSlider label="Raio dos cards" value={tweaks.cardRadius} min={4} max={28} unit="px"
+          onChange={(v) => setTweak('cardRadius', v)} />
+        <TweakSlider label="Escala de fonte" value={tweaks.fontScale} min={0.85} max={1.15} step={0.01}
+          onChange={(v) => setTweak('fontScale', v)} />
+
+        <TweakSection label="Layout" />
+        <TweakRadio label="Densidade" value={tweaks.density}
+          options={[{value:'compact',label:'Comp.'},{value:'regular',label:'Reg.'},{value:'comfy',label:'Conf.'}]}
+          onChange={(v) => setTweak('density', v)} />
+        <TweakRadio label="Bottom nav" value={tweaks.navStyle}
+          options={[{value:'pill',label:'Pill'},{value:'bar',label:'Bar'}]}
+          onChange={(v) => setTweak('navStyle', v)} />
+
+        <TweakSection label="Jornada" />
+        <TweakRadio label="Tipo de usuário" value={isClient ? 'client' : 'prospect'}
+          options={[{value:'client',label:'Cliente'},{value:'prospect',label:'Prospect'}]}
+          onChange={(v) => setIsClient(v === 'client')} />
+        <TweakButton label={authed ? "Voltar ao login" : "Pular login"} onClick={() => setAuthed(!authed)} />
+        <TweakButton label="Abrir edição de cadastro" onClick={() => setEditProfile(true)} />
+
+        <TweakSection label="Compra (Lote 1)" />
+        <TweakRadio label="Simulação" value={tweaks.simulateVariation}
+          options={[{value:'unified',label:'Unificada'},{value:'stepper',label:'Passo a passo'}]}
+          onChange={(v) => setTweak('simulateVariation', v)} />
+        <TweakButton label="Abrir filtros (Estoque)" onClick={() => { setActive('estoque'); setCarDetail(null); setFilterOpen(true); }} />
+        <TweakButton label="Abrir busca (Estoque)" onClick={() => { setActive('estoque'); setCarDetail(null); setSearchOpen(true); }} />
+        <TweakButton label="Abrir Simular (1º carro)" onClick={() => { setCarDetail(data.marketplace[0].id); setSimulateOpen(true); }} />
+        <TweakButton label="Abrir Test Drive (1º carro)" onClick={() => { setCarDetail(data.marketplace[0].id); setTestDriveOpen(true); }} />
+        <TweakButton label="Abrir Chat com loja (1º carro)" onClick={() => { setCarDetail(data.marketplace[0].id); setChatOpen(true); }} />
+      </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

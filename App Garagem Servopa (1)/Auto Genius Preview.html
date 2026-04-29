@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Auto Genius — Preview</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: { fontFamily: { sans: ['Satoshi', 'sans-serif'] } } }
+  };
+</script>
+<style>
+  body { font-family: 'Satoshi', sans-serif; background: #1a1a1a; }
+  .scroll-area::-webkit-scrollbar { width: 0; }
+  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"><div style="color:white;padding:40px;font-family:sans-serif">Carregando Auto Genius...</div></div>
+<div id="err" style="color:#ff6b6b;padding:20px;font-family:monospace;font-size:12px;white-space:pre-wrap;background:#000"></div>
+<script>
+window.addEventListener('error', e => {
+  document.getElementById('err').textContent += '\n[ERR] ' + (e.message || e) + ' @ ' + (e.filename || '') + ':' + (e.lineno||'');
+});
+</script>
+
+<script>
+// Mock data extraído de Auto-Genius-main/constants.ts
+window.AG_DATA = {
+  user: {
+    name: 'Alex Johnson',
+    handle: 'alexjohnson',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80',
+    bio: 'Apaixonado por carros clássicos e tecnologia. Sempre em busca da próxima road trip.',
+    location: 'São Paulo, SP',
+    coverUrl: 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=1200&q=80',
+    isPublicProfile: true,
+    gamification: { level: 'Prata', points: 1250, pointsToNextLevel: 2000, streak: 5 },
+    completedQuests: ['q1'],
+  },
+  garage: [
+    {
+      id: 'g1', make: 'Volkswagen', model: 'Golf GTI', year: 2019,
+      imageUrl: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=1200&q=80',
+      licensePlate: 'ABC-1234',
+    }
+  ],
+  marketplace: [
+    {
+      id: '1', make: 'BMW', model: '320i M Sport', year: 2021, price: 285000,
+      imageUrl: 'https://images.unsplash.com/photo-1556189250-72ba95452e10?auto=format&fit=crop&w=1200&q=80',
+      description: 'BMW Série 3 em estado impecável. Único dono, todas as revisões feitas na concessionária. Pacote M Sport completo, teto solar.',
+      mileage: 25000, color: 'Azul Portimao', fuelType: 'Flex', likes: 42, isLiked: false
+    },
+    {
+      id: '2', make: 'Jeep', model: 'Compass Limited', year: 2022, price: 168000,
+      imageUrl: 'https://images.unsplash.com/photo-1633505062755-29472b44ce60?auto=format&fit=crop&w=1200&q=80',
+      description: 'Jeep Compass Diesel 4x4. Carro de família, muito espaçoso e confortável.',
+      mileage: 15000, color: 'Branco Polar', fuelType: 'Diesel', likes: 28, isLiked: true
+    },
+    {
+      id: '3', make: 'Honda', model: 'Civic Touring', year: 2020, price: 145000,
+      imageUrl: 'https://images.unsplash.com/photo-1606152421811-aba947e8b892?auto=format&fit=crop&w=1200&q=80',
+      description: 'Civic Touring Turbo. O melhor sedã da categoria. Teto solar, sistema de som premium.',
+      mileage: 42000, color: 'Cinza Barium', fuelType: 'Gasolina', likes: 115, isLiked: false
+    },
+    {
+      id: '4', make: 'Porsche', model: '911 Carrera S', year: 2020, price: 950000,
+      imageUrl: 'https://images.unsplash.com/photo-1503376763036-066120622c74?auto=format&fit=crop&w=1200&q=80',
+      description: 'Ícone automotivo. Performance impressionante. Cor exclusiva.',
+      mileage: 8000, color: 'Amarelo Racing', fuelType: 'Gasolina', likes: 340, isLiked: false
+    }
+  ],
+  quests: [
+    { id: 'q1', title: 'Perfil Completo', description: 'Preencha todos os dados do seu perfil.', points: 500, icon: 'user' },
+    { id: 'q2', title: 'Primeiro Diagnóstico', description: 'Use a IA para diagnosticar um problema no seu carro.', points: 300, icon: 'wrench' },
+    { id: 'q3', title: 'Simulação Financeira', description: 'Faça uma simulação de financiamento ou seguro.', points: 200, icon: 'landmark' },
+    { id: 'q4', title: 'Compartilhar Conquista', description: 'Compartilhe sua evolução na comunidade.', points: 100, icon: 'share' },
+  ],
+  posts: [
+    {
+      id: 'p1', authorName: 'Auto Enthusiast', authorHandle: '@carlover99',
+      authorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80',
+      content: 'Acabei de ver o novo lançamento da BMW. O design está incrível! O que acharam?',
+      imageUrl: 'https://images.unsplash.com/photo-1555215696-b979000963ed?auto=format&fit=crop&w=800&q=80',
+      likes: 156, comments: 1, timestamp: '4h', isLiked: false
+    },
+    {
+      id: 'p2', authorName: 'Track Day Official', authorHandle: '@trackdaybr',
+      authorAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=100&q=80',
+      content: 'Resultados da volta rápida de hoje em Interlagos. O Porsche GT3 RS voou baixo!',
+      likes: 892, comments: 0, timestamp: '1d', isLiked: true
+    },
+    {
+      id: 'p3', authorName: 'Maria Garcia', authorHandle: '@mariag',
+      authorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80',
+      content: 'Comprei meu primeiro carro hoje! 🎉 Obrigada Auto Genius pela ajuda na simulação de financiamento.',
+      likes: 234, comments: 12, timestamp: '2d', isLiked: false
+    }
+  ],
+  events: [
+    { id: 'e1', title: 'Encontro de Superesportivos', date: '15 AGO • 09:00', location: 'Autódromo de Interlagos, SP', imageUrl: 'https://images.unsplash.com/photo-1503376763036-066120622c74?auto=format&fit=crop&w=800&q=80', attendees: 1240, price: 'Grátis' },
+    { id: 'e2', title: 'Track Day Night Run', date: '20 AGO • 19:00', location: 'Kartódromo da Granja Viana', imageUrl: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80', attendees: 56, price: 'R$ 150,00' },
+    { id: 'e3', title: 'Feirão de Clássicos', date: '02 SET • 10:00', location: 'Estádio do Pacaembu, SP', imageUrl: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=80', attendees: 3500, price: 'Grátis' }
+  ]
+};
+
+</script>
+
+<script type="text/babel" data-presets="env,react">
+
+const { useState, useEffect } = React;
+
+// Login screen — based on Auto-Genius-main/components/Login.tsx
+
+function LoginScreen({ onLogin }) {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('alex@autogenius.com');
+  const [password, setPassword] = useState('••••••••');
+  const [name, setName] = useState('');
+
+  return (
+    <div className="min-h-full bg-[#292929] flex items-center justify-center p-5 text-[#D1D1D1]">
+      <div className="w-full">
+        <div className="text-center mb-8 mt-2">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#175AC8] to-[#06BCC1] mb-4 shadow-lg shadow-[#175AC8]/30">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+          </div>
+          <h1 className="text-3xl font-black tracking-tight mb-1">Auto Genius</h1>
+          <p className="text-[#999999] text-sm">Sua jornada automotiva começa aqui.</p>
+        </div>
+
+        <div className="space-y-3">
+          {!isLogin && (
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666]" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu Nome" className="w-full bg-[#1f1f1f] border border-[#3a3a3a] rounded-lg py-3 pl-10 pr-4 text-sm focus:outline-none focus:border-[#175AC8]" />
+            </div>
+          )}
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666]" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
+            <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-mail" className="w-full bg-[#1f1f1f] border border-[#3a3a3a] rounded-lg py-3 pl-10 pr-4 text-sm focus:outline-none focus:border-[#175AC8]" />
+          </div>
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666]" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Senha" className="w-full bg-[#1f1f1f] border border-[#3a3a3a] rounded-lg py-3 pl-10 pr-4 text-sm focus:outline-none focus:border-[#175AC8]" />
+          </div>
+
+          <button onClick={onLogin} className="w-full bg-[#175AC8] hover:bg-[#1e6ada] text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 mt-5 transition-all">
+            {isLogin ? 'Entrar' : 'Criar Conta'}
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+
+        <div className="my-5 flex items-center gap-3">
+          <div className="h-px bg-[#3a3a3a] flex-1"></div>
+          <span className="text-[#666] text-xs">OU</span>
+          <div className="h-px bg-[#3a3a3a] flex-1"></div>
+        </div>
+
+        <button onClick={onLogin} className="w-full bg-white hover:bg-gray-100 text-[#292929] font-bold py-3 rounded-lg flex items-center justify-center gap-2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20"/><path d="M2 12h20"/></svg>
+          Entrar com Google
+        </button>
+
+        <div className="mt-5 text-center">
+          <p className="text-[#999999] text-sm">
+            {isLogin ? 'Não tem uma conta?' : 'Já tem uma conta?'}
+            <button onClick={() => setIsLogin(!isLogin)} className="text-[#175AC8] font-bold ml-1">
+              {isLogin ? 'Cadastre-se' : 'Faça Login'}
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+
+// Marketplace screen — based on Auto-Genius-main/components/Marketplace.tsx
+
+function MarketplaceScreen({ cars, onSelectCar, onToggleLike }) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const filtered = cars.filter(c => `${c.make} ${c.model} ${c.year}`.toLowerCase().includes(searchTerm.toLowerCase()));
+  const fmt = (n) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(n);
+
+  return (
+    <div className="bg-[#292929] text-[#D1D1D1] min-h-full">
+      <div className="p-4 space-y-4">
+        <header className="pt-2">
+          <h1 className="text-2xl font-bold text-center text-white">Marketplace</h1>
+          <p className="text-center text-[#999999] text-sm">Encontre o carro dos seus sonhos</p>
+        </header>
+
+        <div className="relative">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-[#999]" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Descreva o carro que você procura..." className="w-full bg-[#333] border border-[#444] rounded-lg py-3 pl-10 pr-12 text-sm placeholder-[#666] focus:outline-none focus:ring-2 focus:ring-[#175AC8]" />
+          <button className="absolute right-2 top-1/2 -translate-y-1/2 text-[#175AC8] p-2 rounded-md" title="Busca Inteligente IA">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {filtered.map(car => (
+            <div key={car.id} onClick={() => onSelectCar(car)} className="bg-[#333] rounded-xl overflow-hidden border border-[#444] active:border-[#175AC8] cursor-pointer transition-all">
+              <div className="relative h-44 w-full bg-gradient-to-br from-[#1f1f1f] to-[#292929]">
+                <img src={car.imageUrl} alt={`${car.make} ${car.model}`} className="w-full h-full object-cover" loading="lazy" />
+                <button onClick={(e) => { e.stopPropagation(); onToggleLike(car.id); }} className={`absolute top-2 left-2 p-2 rounded-full backdrop-blur-md flex items-center gap-1.5 border ${car.isLiked ? 'bg-[#CE0E2D]/20 text-[#CE0E2D] border-[#CE0E2D]/50' : 'bg-black/60 text-white border-[#666]'}`}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill={car.isLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg>
+                  <span className="text-xs font-bold">{car.likes}</span>
+                </button>
+                <button onClick={(e) => e.stopPropagation()} className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm text-[#06BCC1] p-2 rounded-full border border-[#666]" title="Gerar imagem com IA">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>
+                </button>
+              </div>
+              <div className="p-4">
+                <h3 className="text-base font-bold text-white">{car.year} {car.make} {car.model}</h3>
+                <p className="text-xl font-semibold text-[#175AC8] mt-1">{fmt(car.price)}</p>
+                <p className="text-xs text-[#999] mt-2 line-clamp-2 leading-relaxed">{car.description}</p>
+                <div className="mt-3 pt-3 border-t border-[#444] flex justify-around items-center text-[11px] text-[#999]">
+                  <span className="flex items-center gap-1">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
+                    {car.mileage.toLocaleString('pt-BR')} km
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2"/></svg>
+                    {car.color}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" x2="15" y1="22" y2="22"/><line x1="4" x2="14" y1="9" y2="9"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2a2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/></svg>
+                    {car.fuelType}
+                  </span>
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); onSelectCar(car); }} className="mt-3 w-full bg-[#175AC8] text-white text-sm font-bold py-2 rounded-md">Ver Detalhes</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+
+// Dashboard — based on Auto-Genius-main/components/Dashboard.tsx
+function DashboardScreen({ user, quests, onCompleteQuest }) {
+  const { level, points, pointsToNextLevel, streak } = user.gamification;
+  const pct = (points / pointsToNextLevel) * 100;
+
+  const services = [
+    { id: 'financing', title: 'Financiamento', color: '#60A5FA', icon: 'landmark' },
+    { id: 'consortium', title: 'Consórcio', color: '#4ADE80', icon: 'file' },
+    { id: 'equity', title: 'Car Equity', color: '#C084FC', icon: 'car' },
+    { id: 'insurance', title: 'Seguro Auto', color: '#FACC15', icon: 'shield' },
+  ];
+
+  const ServiceIcon = ({ id }) => {
+    if (id === 'landmark') return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>;
+    if (id === 'file') return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>;
+    if (id === 'car') return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>;
+    if (id === 'shield') return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>;
+    return null;
+  };
+  const QIcon = ({ name }) => {
+    if (name === 'user') return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+    if (name === 'wrench') return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>;
+    if (name === 'landmark') return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" x2="21" y1="22" y2="22"/><polygon points="12 2 20 7 4 7"/></svg>;
+    return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>;
+  };
+
+  return (
+    <div className="bg-[#292929] text-[#D1D1D1] min-h-full">
+      <div className="p-4 space-y-4">
+        <header className="flex items-center justify-between pt-2">
+          <div className="flex items-center gap-3">
+            <img src={user.avatarUrl} alt={user.name} className="w-14 h-14 rounded-full border-2 border-[#175AC8] object-cover" />
+            <div>
+              <p className="text-[#999] text-xs">Bem-vindo de volta,</p>
+              <h1 className="text-lg font-bold text-white">{user.name}</h1>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <button className="bg-[#333] border border-[#555] text-white px-3 py-1.5 rounded-full text-[11px] font-bold flex items-center gap-1">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              Editar
+            </button>
+          </div>
+        </header>
+
+        {/* DB Status */}
+        <div className="rounded-lg p-3 flex items-center gap-3 bg-emerald-900/20 border border-emerald-800/50">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34D399" strokeWidth="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" x2="12.01" y1="20" y2="20"/></svg>
+          <p className="text-[13px] font-bold text-emerald-400">Banco de Dados Conectado</p>
+        </div>
+
+        {/* Gamification */}
+        <div className="bg-[#333] rounded-xl p-5 border border-[#444]">
+          <div className="flex justify-between items-start mb-5">
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-[#999] mb-1">Nível Atual</p>
+              <div className="flex items-center gap-2">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#175AC8" strokeWidth="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+                <span className="text-xl font-black text-white">{level}</span>
+              </div>
+            </div>
+            <div className="flex flex-col items-end">
+              <p className="text-[10px] uppercase tracking-widest text-[#999] mb-1">Ofensiva</p>
+              <div className="flex items-center gap-1 bg-[#EC6C24]/10 border border-[#EC6C24]/40 px-3 py-1 rounded-full">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#EC6C24" stroke="#EC6C24" strokeWidth="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                <span className="font-bold text-[#EC6C24] text-xs">{streak} dias</span>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-xs font-medium">
+              <span className="text-white">{points} pts</span>
+              <span className="text-[#666]">{pointsToNextLevel} pts</span>
+            </div>
+            <div className="w-full bg-[#1f1f1f] rounded-full h-3 border border-[#555] p-0.5">
+              <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #175AC8, #06BCC1)' }} />
+            </div>
+            <p className="text-[10px] text-center text-[#666] pt-1">
+              Você precisa de mais <span className="text-white font-bold">{pointsToNextLevel - points}</span> pontos para o próximo nível.
+            </p>
+          </div>
+        </div>
+
+        {/* Quests */}
+        <div className="bg-[#333] rounded-xl p-4 border border-[#444]">
+          <h2 className="text-base font-semibold text-white mb-3">Quests para você</h2>
+          <div className="space-y-2">
+            {quests.map(q => {
+              const done = user.completedQuests.includes(q.id);
+              return (
+                <div key={q.id} className={`flex items-center justify-between p-3 rounded-lg ${done ? 'bg-emerald-500/10' : 'bg-[#444]'}`}>
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className={done ? 'text-emerald-400' : 'text-[#60A5FA]'}><QIcon name={q.icon} /></div>
+                    <div className="min-w-0">
+                      <h3 className={`font-semibold text-sm ${done ? 'text-[#999]' : 'text-white'}`}>{q.title}</h3>
+                      <p className="text-[11px] text-[#999] truncate">{q.description}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => !done && onCompleteQuest(q.id, q.points)} disabled={done} className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold flex-shrink-0 ${done ? 'bg-emerald-500/20 text-emerald-300' : 'bg-[#175AC8] text-white'}`}>
+                    {done ? '✓ Done' : `+${q.points}`}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Financial Services */}
+        <div>
+          <h2 className="text-base font-semibold text-white mb-3">Serviços Financeiros Inteligentes</h2>
+          <div className="grid grid-cols-2 gap-3">
+            {services.map(s => (
+              <button key={s.id} className="bg-[#333] p-4 rounded-xl flex flex-col items-center gap-2 border border-[#444]">
+                <div className="bg-[#444] p-3 rounded-full" style={{ color: s.color }}><ServiceIcon id={s.icon} /></div>
+                <span className="font-semibold text-white text-xs">{s.title}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+
+// Garagem (Profile) — based on Auto-Genius-main/components/Profile.tsx
+function GaragemScreen({ user, garage, onViewCar }) {
+  return (
+    <div className="bg-[#292929] text-[#D1D1D1] min-h-full">
+      <div className="relative mb-14">
+        <div className="h-32 w-full overflow-hidden relative">
+          <img src={user.coverUrl} alt="Cover" className="w-full h-full object-cover opacity-70" />
+          <div className="absolute top-2 left-3 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full">
+            <p className="text-[10px] text-white font-bold uppercase tracking-wider">Minha Garagem</p>
+          </div>
+        </div>
+        <div className="absolute top-20 left-3 right-3 flex justify-between items-end">
+          <div className="w-24 h-24 rounded-full border-4 border-[#292929] bg-[#333] overflow-hidden">
+            <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+          </div>
+          <button className="mb-2 bg-black/60 backdrop-blur-md border border-[#555] text-white px-3 py-1.5 rounded-full text-xs font-bold">
+            Editar Perfil
+          </button>
+        </div>
+      </div>
+
+      <div className="px-4 mb-5">
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-bold text-white">{user.name}</h1>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a14.5 14.5 0 0 1 0 20 14.5 14.5 0 0 1 0-20"/></svg>
+        </div>
+        <p className="text-[#666] text-xs mb-1">@{user.handle}</p>
+        <p className="text-[#bbb] text-xs mb-2 leading-relaxed">{user.bio}</p>
+        <div className="flex items-center text-[#666] text-xs">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-1"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>{user.location}</span>
+        </div>
+      </div>
+
+      <div className="p-4 space-y-4 border-t border-[#3a3a3a] pt-5">
+        <h2 className="text-lg font-bold text-white">Garagem ({garage.length})</h2>
+        <div className="grid grid-cols-1 gap-3">
+          {garage.map((car, idx) => (
+            <div key={car.id || idx} onClick={() => onViewCar(car)} className="bg-[#333] rounded-xl overflow-hidden border border-[#444] cursor-pointer">
+              <div className="h-32 w-full overflow-hidden relative">
+                <img src={car.imageUrl} alt={`${car.make} ${car.model}`} className="w-full h-full object-cover" />
+                <div className="absolute top-2 right-2 flex gap-2">
+                  <button onClick={(e) => e.stopPropagation()} className="bg-black/60 p-1.5 rounded-full text-white border border-[#555]">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  </button>
+                  <button onClick={(e) => e.stopPropagation()} className="bg-black/60 p-1.5 rounded-full text-white border border-[#555]">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div className="p-3">
+                <h3 className="text-base font-bold text-white">{car.make} {car.model}</h3>
+                <p className="text-[#999] text-xs mt-0.5">{car.year} • {car.licensePlate}</p>
+              </div>
+            </div>
+          ))}
+          <button className="bg-[#333]/50 rounded-xl border-2 border-dashed border-[#555] flex flex-col items-center justify-center p-5 h-32">
+            <div className="bg-[#444] p-2.5 rounded-full mb-2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            </div>
+            <span className="text-[#999] text-sm font-medium">Adicionar Veículo</span>
+          </button>
+        </div>
+
+        <div className="bg-[#333] rounded-xl p-4 border border-[#444]">
+          <h3 className="text-base font-semibold mb-3 text-white">Serviços</h3>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: 'Multas', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#175AC8" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
+              { label: 'IPVA', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#175AC8" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg> },
+              { label: 'Seguro', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#175AC8" strokeWidth="2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg> }
+            ].map(s => (
+              <button key={s.label} className="flex flex-col items-center gap-2 bg-[#444] p-3 rounded-lg">
+                {s.icon}
+                <span className="text-xs font-medium text-[#bbb]">{s.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-[#333] rounded-xl p-4 border border-[#444]">
+          <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-white">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#175AC8" strokeWidth="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            Diagnóstico com IA
+          </h3>
+          <textarea placeholder="Descreva o problema..." className="w-full bg-[#444] rounded-md p-2.5 text-white text-sm placeholder-[#777]" rows={3} />
+          <button className="mt-3 w-full bg-[#175AC8] text-white text-sm font-bold py-2 rounded-md">Analisar Problema</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+
+// Comunidade — based on Auto-Genius-main/components/SocialFeed.tsx
+
+function ComunidadeScreen({ user, posts, events, onLikePost }) {
+  const [tab, setTab] = useState('feed');
+  const [postContent, setPostContent] = useState('');
+
+  return (
+    <div className="bg-[#292929] text-[#D1D1D1] min-h-full">
+      <header className="sticky top-0 z-20 bg-[#292929]/90 backdrop-blur-md border-b border-[#3a3a3a]">
+        <h1 className="text-lg font-bold text-white px-4 pt-3 pb-2">Comunidade</h1>
+        <div className="flex px-4 gap-6">
+          <button onClick={() => setTab('feed')} className={`pb-2.5 text-sm font-bold border-b-2 transition-colors ${tab === 'feed' ? 'text-white border-[#175AC8]' : 'text-[#666] border-transparent'}`}>Feed</button>
+          <button onClick={() => setTab('events')} className={`pb-2.5 text-sm font-bold border-b-2 transition-colors ${tab === 'events' ? 'text-white border-[#175AC8]' : 'text-[#666] border-transparent'}`}>Eventos</button>
+        </div>
+      </header>
+
+      {tab === 'feed' ? (
+        <>
+          <div className="p-4 border-b border-[#3a3a3a] flex gap-3">
+            <img src={user.avatarUrl} alt={user.name} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+            <div className="flex-1">
+              <textarea value={postContent} onChange={(e) => setPostContent(e.target.value)} placeholder="O que está acontecendo no mundo automotivo?" className="w-full bg-transparent text-white placeholder-[#666] text-sm resize-none focus:outline-none min-h-[60px]" />
+              <div className="flex justify-between items-center mt-1 border-t border-[#3a3a3a] pt-2">
+                <button className="text-[#175AC8] hover:bg-[#175AC8]/10 p-1.5 rounded-full">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                </button>
+                <button disabled={!postContent.trim()} className="bg-[#175AC8] text-white text-sm font-bold py-1.5 px-4 rounded-full disabled:opacity-50">Postar</button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            {posts.map(post => (
+              <div key={post.id} className="border-b border-[#3a3a3a] p-4">
+                <div className="flex gap-3">
+                  <img src={post.authorAvatar} alt={post.authorName} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                      <span className="font-bold text-white text-sm">{post.authorName}</span>
+                      <span className="text-[#666] text-xs">{post.authorHandle} · {post.timestamp}</span>
+                    </div>
+                    <p className="text-[#ddd] text-sm mb-2 leading-relaxed">{post.content}</p>
+                    {post.imageUrl && (
+                      <div className="rounded-xl overflow-hidden border border-[#3a3a3a] mb-2">
+                        <img src={post.imageUrl} alt="Post" className="w-full max-h-72 object-cover" />
+                      </div>
+                    )}
+                    <div className="flex justify-between text-[#666] mt-2 max-w-[260px]">
+                      <button className="flex items-center gap-1.5">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        <span className="text-xs">{post.comments}</span>
+                      </button>
+                      <button>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+                      </button>
+                      <button onClick={() => onLikePost(post.id)} className={`flex items-center gap-1.5 ${post.isLiked ? 'text-[#CE0E2D]' : ''}`}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill={post.isLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg>
+                        <span className="text-xs">{post.likes}</span>
+                      </button>
+                      <button>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="p-4 space-y-3">
+          {events.map(ev => (
+            <div key={ev.id} className="bg-[#333] rounded-xl overflow-hidden border border-[#444]">
+              <div className="h-32 relative">
+                <img src={ev.imageUrl} alt={ev.title} className="w-full h-full object-cover" />
+                <div className="absolute top-2 right-2 bg-black/80 px-2 py-1 rounded text-[10px] font-bold text-white border border-[#555]">{ev.price}</div>
+              </div>
+              <div className="p-3">
+                <p className="text-[#EC6C24] font-bold text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                  {ev.date}
+                </p>
+                <h3 className="text-base font-bold text-white mb-1">{ev.title}</h3>
+                <div className="flex items-center text-[#999] text-xs mb-1">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-1"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                  {ev.location}
+                </div>
+                <div className="flex items-center text-[#666] text-[11px]">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-1"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  {ev.attendees} confirmados
+                </div>
+                <button className="mt-3 w-full bg-[#444] text-white text-xs font-bold py-2 rounded-lg">Confirmar Presença</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
+
+// CarDetail — based on Auto-Genius-main/components/CarDetail.tsx
+function CarDetailScreen({ car, onBack, isOwner }) {
+  const fmt = (n) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(n);
+
+  const Detail = ({ icon, label, value }) => (
+    <div className="bg-[#333] p-3 rounded-lg flex flex-col items-center text-center border border-[#444]">
+      <div className="text-[#175AC8] mb-1">{icon}</div>
+      <p className="text-[10px] text-[#999]">{label}</p>
+      <p className="font-semibold text-white text-xs mt-0.5">{value}</p>
+    </div>
+  );
+
+  return (
+    <div className="bg-[#292929] text-[#D1D1D1] min-h-full">
+      <header className="p-3 flex items-center bg-[#292929]/90 backdrop-blur-sm sticky top-0 z-10 border-b border-[#3a3a3a]">
+        <button onClick={onBack} className="p-2 -ml-2 rounded-full text-white">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <h1 className="text-base font-bold ml-2 text-white truncate">{car.make} {car.model}</h1>
+      </header>
+
+      <main className="p-4 space-y-4 pb-24">
+        <div className="rounded-xl overflow-hidden border border-[#444] h-52">
+          <img src={car.imageUrl} alt={`${car.make} ${car.model}`} className="w-full h-full object-cover" />
+        </div>
+
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-white">{car.year} {car.make} {car.model}</h2>
+          {!isOwner && car.price > 0 && (
+            <p className="text-2xl font-semibold text-[#175AC8] mt-1">{fmt(car.price)}</p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <Detail icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>} label="Ano" value={car.year} />
+          <Detail icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>} label="KM" value={`${car.mileage.toLocaleString('pt-BR')}`} />
+          <Detail icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2"/></svg>} label="Cor" value={car.color} />
+          <Detail icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" x2="15" y1="22" y2="22"/><line x1="4" x2="14" y1="9" y2="9"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2a2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/></svg>} label="Combustível" value={car.fuelType} />
+        </div>
+
+        <div className="bg-[#333] rounded-xl p-4 border border-[#444]">
+          <h3 className="text-sm font-semibold mb-2 text-white">Descrição</h3>
+          <p className="text-[#bbb] text-xs leading-relaxed">{car.description}</p>
+        </div>
+
+        <div className="bg-[#333] rounded-xl p-4 border border-[#444]">
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2 text-white">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#175AC8" strokeWidth="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
+            Compartilhar
+          </h3>
+          <div className="flex gap-2">
+            <button className="flex-1 bg-[#1877F2]/10 text-[#1877F2] py-2 rounded-lg flex items-center justify-center border border-[#1877F2]/30 text-xs font-medium">Facebook</button>
+            <button className="flex-1 bg-[#1DA1F2]/10 text-[#1DA1F2] py-2 rounded-lg flex items-center justify-center border border-[#1DA1F2]/30 text-xs font-medium">Twitter</button>
+            <button className="flex-1 bg-[#25D366]/10 text-[#25D366] py-2 rounded-lg flex items-center justify-center border border-[#25D366]/30 text-xs font-medium">WhatsApp</button>
+          </div>
+        </div>
+      </main>
+
+      {!isOwner && (
+        <div className="absolute bottom-0 left-0 right-0 p-3 bg-[#292929]/95 backdrop-blur-sm border-t border-[#3a3a3a]">
+          <button className="w-full bg-[#175AC8] text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+            Tenho Interesse
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
+
+// BottomNav — based on Auto-Genius-main/components/BottomNav.tsx
+function BottomNav({ active, onChange }) {
+  const items = [
+    { id: 'loja', label: 'Loja', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2a2.7 2.7 0 0 1-1.59-.63.5.5 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.5.5 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.5.5 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.5.5 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/></svg> },
+    { id: 'comunidade', label: 'Comunidade', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+    { id: 'garagem', label: 'Garagem', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg> },
+    { id: 'conta', label: 'Conta', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
+  ];
+  return (
+    <div className="absolute bottom-0 left-0 right-0 h-16 bg-[#333] border-t border-[#444] flex justify-around items-center z-50">
+      {items.map(it => (
+        <button key={it.id} onClick={() => onChange(it.id)} className={`flex flex-col items-center justify-center flex-1 transition-colors ${active === it.id ? 'text-[#175AC8]' : 'text-[#999]'}`}>
+          {it.icon}
+          <span className="text-[10px] mt-1 font-medium">{it.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+
+
+
+function App() {
+  const [authed, setAuthed] = useState(false);
+  const [view, setView] = useState('loja');
+  const [selectedCar, setSelectedCar] = useState(null);
+  const [user, setUser] = useState(window.AG_DATA.user);
+  const [cars, setCars] = useState(window.AG_DATA.marketplace);
+  const [posts, setPosts] = useState(window.AG_DATA.posts);
+  const [garage] = useState(window.AG_DATA.garage);
+  const events = window.AG_DATA.events;
+  const quests = window.AG_DATA.quests;
+
+  useEffect(() => {
+    const saved = localStorage.getItem('ag_state_v1');
+    if (saved) {
+      try {
+        const s = JSON.parse(saved);
+        if (s.authed !== undefined) setAuthed(s.authed);
+        if (s.view) setView(s.view);
+      } catch {}
+    }
+  }, []);
+  useEffect(() => {
+    localStorage.setItem('ag_state_v1', JSON.stringify({ authed, view }));
+  }, [authed, view]);
+
+  const toggleLikeCar = (id) => {
+    setCars(cs => cs.map(c => c.id === id ? { ...c, isLiked: !c.isLiked, likes: c.isLiked ? c.likes - 1 : c.likes + 1 } : c));
+  };
+  const likePost = (id) => {
+    setPosts(ps => ps.map(p => p.id === id ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 } : p));
+  };
+  const completeQuest = (qid, points) => {
+    setUser(u => {
+      if (u.completedQuests.includes(qid)) return u;
+      return { ...u, completedQuests: [...u.completedQuests, qid], gamification: { ...u.gamification, points: u.gamification.points + points } };
+    });
+  };
+
+  let screen;
+  if (!authed) {
+    screen = <LoginScreen onLogin={() => setAuthed(true)} />;
+  } else if (selectedCar) {
+    const isOwner = view === 'garagem';
+    screen = <CarDetailScreen car={selectedCar} isOwner={isOwner} onBack={() => setSelectedCar(null)} />;
+  } else if (view === 'loja') {
+    screen = <MarketplaceScreen cars={cars} onSelectCar={setSelectedCar} onToggleLike={toggleLikeCar} />;
+  } else if (view === 'conta') {
+    screen = <DashboardScreen user={user} quests={quests} onCompleteQuest={completeQuest} />;
+  } else if (view === 'garagem') {
+    screen = <GaragemScreen user={user} garage={garage} onViewCar={(c) => setSelectedCar({ ...c, price: 0, mileage: 0, color: '-', fuelType: '-', description: `Veículo da garagem de ${user.name}.` })} />;
+  } else if (view === 'comunidade') {
+    screen = <ComunidadeScreen user={user} posts={posts} events={events} onLikePost={likePost} />;
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 0', background: '#1a1a1a' }}>
+      <div style={{
+        width: 390, height: 820, borderRadius: 48, overflow: 'hidden',
+        position: 'relative', background: '#000',
+        boxShadow: '0 40px 80px rgba(0,0,0,0.5), 0 0 0 10px #1a1a1a, 0 0 0 11px #333',
+      }}>
+        <div style={{
+          position: 'absolute', top: 11, left: '50%', transform: 'translateX(-50%)',
+          width: 120, height: 34, borderRadius: 22, background: '#000', zIndex: 50,
+        }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px', zIndex: 40, color: 'white', fontSize: 15, fontWeight: 600, fontFamily: '-apple-system, system-ui' }}>
+          <span>9:41</span>
+          <span style={{ width: 120 }}></span>
+          <span style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+            <svg width="17" height="11" viewBox="0 0 17 11"><rect x="0" y="6" width="3" height="4" rx="0.5" fill="white"/><rect x="4.5" y="4" width="3" height="6" rx="0.5" fill="white"/><rect x="9" y="2" width="3" height="8" rx="0.5" fill="white"/><rect x="13.5" y="0" width="3" height="10" rx="0.5" fill="white"/></svg>
+            <svg width="24" height="11" viewBox="0 0 24 11"><rect x="0.5" y="0.5" width="20" height="10" rx="3" stroke="white" strokeOpacity="0.5" fill="none"/><rect x="2" y="2" width="17" height="7" rx="1.5" fill="white"/><path d="M22 4v3c.7-.2 1-.7 1-1.5S22.7 4.2 22 4z" fill="white" fillOpacity="0.5"/></svg>
+          </span>
+        </div>
+        <div className="relative w-full h-full bg-[#292929]" data-screen-label={authed ? (selectedCar ? 'Detalhe' : view) : 'Login'} style={{ paddingTop: 50 }}>
+          <div className="absolute inset-0 overflow-y-auto scroll-area" style={{ top: 50, paddingBottom: authed && !selectedCar ? '80px' : '24px' }}>
+            {screen}
+          </div>
+          {authed && !selectedCar && (
+            <BottomNav active={view} onChange={setView} />
+          )}
+        </div>
+        <div style={{
+          position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)',
+          width: 134, height: 5, borderRadius: 100,
+          background: 'rgba(255,255,255,0.6)', zIndex: 60, pointerEvents: 'none',
+        }} />
+      </div>
+    </div>
+  );
+}
+
+try {
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(<App />);
+} catch (e) {
+  document.getElementById('err').textContent = 'Render error: ' + (e.stack || e.message || e);
+}
+
+</script>
+</body>
+</html>
